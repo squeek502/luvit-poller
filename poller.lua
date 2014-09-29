@@ -2,6 +2,7 @@ local Emitter = require("core").Emitter
 local http = require("https")
 local parse_url = require("url").parse
 local timer = require("timer")
+local math = require "math"
 
 local function secs_to_milli(secs)
 	if secs == nil then secs = 0 end
