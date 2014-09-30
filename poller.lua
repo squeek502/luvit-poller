@@ -89,11 +89,13 @@ function Poller:_poll()
 		["Accept"] = "*/*"
 	}
 	local request_headers = table_fallback(self.headers, default_request_headers)
+	local protocol = self.parsed_url.protocol or "http"
+	local port = self.parsed_url.port or (protocol == "https" and 443 or 80)
 	local request = http.request(
 	{
-		protocol = self.parsed_url.protocol or "http",
+		protocol = protocol,
 		host = self.parsed_url.hostname,
-		port = self.parsed_url.port or 80,
+		port = port,
 		path = self.parsed_url.pathname or "/",
 		headers = request_headers
 	}, 

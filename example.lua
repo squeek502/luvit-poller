@@ -3,7 +3,7 @@ local JSON = require ('json')
 local FS = require('fs')
 local Path = require('path')
 
-local event_poller = Poller:new("https://api.github.com:443/rate_limit")
+local event_poller = Poller:new("https://api.github.com/rate_limit")
 
 event_poller:on("data", function(data)
 	local parsed = JSON.parse(data)
