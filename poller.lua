@@ -81,7 +81,7 @@ function Poller:_poll()
 		return
 	end
 
-	p("polling "..self.url)
+	self:emit("polling")
 
 	local default_request_headers = {
 		["User-Agent"] = "luvit-poller",
