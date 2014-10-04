@@ -3,6 +3,7 @@ local http = require("https")
 local parse_url = require("url").parse
 local timer = require("timer")
 local math = require "math"
+local os = require "os"
 
 local function secs_to_milli(secs)
 	if secs == nil then secs = 0 end
@@ -12,8 +13,11 @@ end
 
 local function table_fallback(settings, defaults)
 	local merged = {}
+	for key,value in pairs(settings) do
+		merged[key] = value
+	end
 	for key,value in pairs(defaults) do
-		if settings[key] == nil then
+		if merged[key] == nil then
 			merged[key] = value
 		end
 	end
@@ -22,10 +26,11 @@ end
 
 local Poller = Emitter:extend()
 
-function Poller:initialize(url, interval, headers, auto_start)
+function Poller:initialize(url, interval, headers, options, auto_start)
 	self.url = url
 	self.interval = interval or secs_to_milli(60)
 	self.headers = headers or {}
+	self.options = options or {}
 
 	self.parsed_url = parse_url(url)
 	self.userinterval = interval
@@ -89,17 +94,19 @@ function Poller:_poll()
 		["Accept"] = "*/*"
 	}
 	local request_headers = table_fallback(self.headers, default_request_headers)
+
 	local protocol = self.parsed_url.protocol or "http"
 	local port = self.parsed_url.port or (protocol == "https" and 443 or 80)
-	local request = http.request(
-	{
+	local default_options = {
 		protocol = protocol,
 		host = self.parsed_url.hostname,
 		port = port,
 		path = self.parsed_url.pathname or "/",
 		headers = request_headers
-	}, 
-	function (response)
+	}
+	local options = table_fallback(self.options, default_options)
+
+	local request = http.request(options, function (response)
 		local data = ""
 		response:on("data", function (chunk)
 			data = data .. chunk
@@ -127,7 +134,7 @@ end
 
 function Poller:_getratelimitedinterval()
 	if self.ratelimit_reset and self.ratelimit_remaining then
-		local time_left = self.ratelimit_reset - require("os").time()
+		local time_left = self.ratelimit_reset - os.time()
 		if time_left > 0 then
 			return secs_to_milli(time_left/(self.ratelimit_remaining+1))
 		end
