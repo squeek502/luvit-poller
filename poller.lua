@@ -26,7 +26,7 @@ end
 
 local function RFC_1123(time)
 	-- Sun, 06 Nov 1994 08:49:37 GMT
-	return os.date("%a, %d %b %Y %H:%M:%S GMT", time)
+	return os.date("!%a, %d %b %Y %H:%M:%S GMT", time)
 end
 
 local Poller = Emitter:extend()
