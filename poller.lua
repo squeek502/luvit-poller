@@ -91,14 +91,16 @@ function Poller:_poll()
 		return
 	end
 
-	self:emit("polling")
-
 	local default_request_headers = {
 		["User-Agent"] = "luvit-poller",
 		["If-None-Match"] = self.etag,
-		["If-Modified-Since"] = self.last_poll and RFC_1123(self.last_poll) or nil,
 		["Accept"] = "*/*"
 	}
+	-- only use If-Modified-Since if etag doesn't exist
+	-- this is a protection against servers that send Last-Modified in the wrong timezone
+	if not self.etag then
+		default_request_headers["If-Modified-Since"] = self.last_poll and RFC_1123(self.last_poll) or nil
+	end
 	local request_headers = table_fallback(self.headers, default_request_headers)
 
 	local protocol = self.parsed_url.protocol or "http"
@@ -135,6 +137,8 @@ function Poller:_poll()
 	request:on("error", function(err)
 		self:emit("Error while sending a request: " .. tostring(err), err)
 	end)
+
+	self:emit("polling", request)
 
 	request:done()
 end
