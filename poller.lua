@@ -24,6 +24,11 @@ local function table_fallback(settings, defaults)
 	return merged
 end
 
+local function RFC_1123(time)
+	-- Sun, 06 Nov 1994 08:49:37 GMT
+	return os.date("%a, %d %b %Y %H:%M:%S GMT", time)
+end
+
 local Poller = Emitter:extend()
 
 function Poller:initialize(url, interval, headers, options, auto_start)
@@ -91,6 +96,7 @@ function Poller:_poll()
 	local default_request_headers = {
 		["User-Agent"] = "luvit-poller",
 		["If-None-Match"] = self.etag,
+		["If-Modified-Since"] = self.last_poll and RFC_1123(self.last_poll) or nil,
 		["Accept"] = "*/*"
 	}
 	local request_headers = table_fallback(self.headers, default_request_headers)
@@ -122,6 +128,7 @@ function Poller:_poll()
 				self:emit("data", data, response)
 			end
 			response:destroy()
+			self.last_poll = os.time()
 		end)
 	end)
 
