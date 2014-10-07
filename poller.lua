@@ -42,6 +42,7 @@ function Poller:initialize(url, interval, headers, options, auto_start)
 	self.task = nil
 
 	self.etag = nil
+	self.last_modified = nil
 	self.ratelimit_limit = nil	-- Request limit per x (differs by API)
 	self.ratelimit_remaining = nil	-- The number of requests left for the time window
 	self.ratelimit_reset = nil	-- The remaining window before the rate limit resets in UTC epoch seconds
@@ -91,16 +92,19 @@ function Poller:_poll()
 		return
 	end
 
+	local if_modified_since = self.last_modified
+	-- only use last_poll for If-Modified-Since if etag doesn't exist
+	-- this is a protection against servers that send Last-Modified in the wrong timezone
+	if not if_modified_since and not self.etag then
+		if_modified_since = self.last_poll and RFC_1123(self.last_poll) or nil
+	end
+
 	local default_request_headers = {
 		["User-Agent"] = "luvit-poller",
 		["If-None-Match"] = self.etag,
+		["If-Modified-Since"] = if_modified_since,
 		["Accept"] = "*/*"
 	}
-	-- only use If-Modified-Since if etag doesn't exist
-	-- this is a protection against servers that send Last-Modified in the wrong timezone
-	if not self.etag then
-		default_request_headers["If-Modified-Since"] = self.last_poll and RFC_1123(self.last_poll) or nil
-	end
 	local request_headers = table_fallback(self.headers, default_request_headers)
 
 	local protocol = self.parsed_url.protocol or "http"
@@ -159,6 +163,7 @@ function Poller:_conformtoheader(header)
 	self.ratelimit_remaining = tonumber(header["x-ratelimit-remaining"] or header["x-rate-limit-remaining"] or self.ratelimit_remaining)
 	self.ratelimit_reset = tonumber(header["x-ratelimit-reset"] or header["x-rate-limit-reset"] or self.ratelimit_reset)
 	self.etag = header.etag or self.etag
+	self.last_modified = header["last-modified"] or self.last_modified
 	local poll_interval = secs_to_milli(header["x-poll-interval"])
 	local rate_interval = self:_getratelimitedinterval()
 	local min_interval = math.max(poll_interval, rate_interval)
