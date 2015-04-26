@@ -1,4 +1,4 @@
-local Poller = require ('./poller')
+local Poller = require ('.')
 local JSON = require ('json')
 local FS = require('fs')
 local Path = require('path')

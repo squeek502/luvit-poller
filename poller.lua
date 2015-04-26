@@ -133,7 +133,6 @@ function Poller:_poll()
 			else
 				self:emit("data", data, response)
 			end
-			response:destroy()
 			self.last_poll = os.time()
 		end)
 	end)
