@@ -1,9 +1,10 @@
 return {
-  name = "luvit-poller",
+  name = "squeek502/poller",
   version = "0.2.0",
-  private = true,
   description = "simple polling client that respects headers",
-  author = "squeek",
+  author = {
+    name="squeek"
+  },
   dependencies = {
     "luvit/luvit@2.1.0"
   },
